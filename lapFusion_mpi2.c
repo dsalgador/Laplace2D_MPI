@@ -113,7 +113,7 @@ int main(int argc, char** argv)
 
   int iter = 0;
 
-  if(numtasks >1){
+  //if(numtasks >1){
   //Broadcast de global error, n and iter_max
   MPI_Bcast(&error, 1, MPI_FLOAT, MASTER, MPI_COMM_WORLD);
   MPI_Bcast(&n, 1, MPI_INT, MASTER, MPI_COMM_WORLD);
@@ -122,6 +122,11 @@ int main(int argc, char** argv)
 
   my_nrows = n/numtasks; 
   my_size = n*(my_nrows+2);
+
+  if (rank == MASTER){
+    printf("my_nrows %d, process %d\n", my_nrows ,rank);
+  }
+
 
   my_A    = (float*) malloc( my_size*sizeof(float) );
   my_temp = (float*) malloc( my_size*sizeof(float) );
@@ -135,9 +140,45 @@ int main(int argc, char** argv)
   posi = ri*n;
   posf = rf*n;
 
+ while ( error > tol*tol && iter < iter_max )
+  {
+    iter++;
+    //MPI_Send(buffer, count , type ,dest, tag, comm);
+    if(rank > MASTER){
+      MPI_Send(my_A+n, n, MPI_FLOAT, rank-1, tag ,MPI_COMM_WORLD);
+      MPI_Recv(my_A  , n, MPI_FLOAT, rank-1, tag ,MPI_COMM_WORLD, &Stat);
+    }
+    if(rank < numtasks -1 ){
+       MPI_Send(  (my_A + n*(my_nrows))  , n, MPI_FLOAT, rank+1, tag ,MPI_COMM_WORLD);
+       MPI_Recv( (my_A + n*(my_nrows+1) )  , n, MPI_FLOAT, rank+1, tag ,MPI_COMM_WORLD, &Stat);
+    }
+
+    MPI_Barrier(MPI_COMM_WORLD);
+    if(rank == 1){
+    printf("La matriu del procés %d és: \n", rank);
+    print_matrix(my_A, my_nrows+2,n);
+    printf("\n");
+  }
+    
+
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    exit(0);
 
 
- }
+    if(rank == MASTER){
+        printf("He passat la barrera (Master)");
+    }
+
+    error= laplace_step(A, temp, n);
+    float *swap= A; A=temp; temp= swap; // swap pointers A & temp
+  }
+
+
+
+
+
+ //}
 
 
   /*
