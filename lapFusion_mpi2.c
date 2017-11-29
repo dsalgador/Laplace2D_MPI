@@ -127,19 +127,13 @@ int main(int argc, char** argv)
   my_temp = (float*) malloc( my_size*sizeof(float) );
 
   MPI_Scatter(A, my_nrows*n,  MPI_FLOAT, my_A+n, my_nrows*n, MPI_FLOAT, MASTER, MPI_COMM_WORLD);
+  MPI_Scatter(temp, my_nrows*n,  MPI_FLOAT, my_temp+n, my_nrows*n, MPI_FLOAT, MASTER, MPI_COMM_WORLD);
+
 
   ri = rank * my_nrows; //-1
   rf = ri + my_nrows;//+1
   posi = ri*n;
   posf = rf*n;
-
-  printf("I'm process %d and my matrix is:\n", rank);
-
-  print_matrix(my_A, my_nrows+2,n);
-  printf("\n");
-
-
-
 
 
 
