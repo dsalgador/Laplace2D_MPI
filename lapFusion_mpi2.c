@@ -43,6 +43,19 @@ void laplace_init(float *in, int n)
   }
 }
 
+void print_matrix(float * in, int nrows, int ncols){
+    int i,j;
+    for ( j=0; j < nrows; j++ ){
+      for ( i=0; i < ncols; i++ )
+    {
+      printf("%0.3f|", in[j*ncols+i]);
+    }
+    printf("\n");
+    }
+    printf("\n");
+
+}
+
 int main(int argc, char** argv)
 {
   int n = 4096;
@@ -89,6 +102,13 @@ int main(int argc, char** argv)
   printf("Jacobi relaxation Calculation: %d x %d mesh,"
          " maximum of %d iterations\n", 
          n, n, iter_max );
+  
+  if(n<20){
+    print_matrix(A, n,n); 
+ }
+
+  //send the parts of matrix to each process
+
   } 
 
   int iter = 0;
@@ -106,15 +126,22 @@ int main(int argc, char** argv)
   my_A    = (float*) malloc( my_size*sizeof(float) );
   my_temp = (float*) malloc( my_size*sizeof(float) );
 
+  MPI_Scatter(A, my_nrows*n,  MPI_FLOAT, my_A+n, my_nrows*n, MPI_FLOAT, MASTER, MPI_COMM_WORLD);
+
   ri = rank * my_nrows; //-1
   rf = ri + my_nrows;//+1
   posi = ri*n;
   posf = rf*n;
 
-  printf("Hi i'm process %d and my n is %d\n", rank, n);
-  printf("Hi i'm process %d and my iter_max is %d\n", rank, iter_max);
-    printf("Hi i'm process %d and my iter is %d\n", rank, iter);
-  printf("Hi i'm process %d and my error is %.06f\n", rank, error);
+  printf("I'm process %d and my matrix is:\n", rank);
+
+  print_matrix(my_A, my_nrows+2,n);
+  printf("\n");
+
+
+
+
+
 
  }
 
