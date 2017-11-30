@@ -74,7 +74,7 @@ float my_laplace_step(float *in, float *out, int nrows, int ncols)
 Commands to test this version
 module load gcc/6.1.0
 module load mpe2/mpi-1.10.2/2.4.8
-mpicc -g -lm -o mpi_lapFusion2 lapFusion_mpi2.c
+mpicc -g -lm -fopenmp -o mpi_lapFusion2 lapFusion_mpi2.c
 
 mpirun -np 3 mpi_lapFusion2 12 2
 */
@@ -197,17 +197,6 @@ int main(int argc, char** argv)
 
     MPI_Reduce(&my_error, &error, 1, MPI_FLOAT, MPI_MAX, MASTER, MPI_COMM_WORLD);
 
-    //Send the new portions of matrix to MASTER
-    /*MPI_Gather(
-    void* send_data,
-    int send_count,
-    MPI_Datatype send_datatype,
-    void* recv_data,
-    int recv_count,
-    MPI_Datatype recv_datatype,
-    int root,
-    MPI_Comm communicator)*/
-
 
 
 
@@ -233,6 +222,21 @@ int main(int argc, char** argv)
     //Bcast of error again?
   }
 
+  //Send the new portions of matrix to MASTER
+    /*MPI_Gather(
+    void* send_data,
+    int send_count,
+    MPI_Datatype send_datatype,
+    void* recv_data,
+    int recv_count,
+    MPI_Datatype recv_datatype,
+    int root,
+    MPI_Comm communicator)*/
+
+  //MPI_Gather(A, my_nrows*n,  MPI_FLOAT, my_A+n, my_nrows*n, MPI_FLOAT, MASTER, MPI_COMM_WORLD);
+  MPI_Gather(my_A+n, my_nrows*n ,  MPI_FLOAT, A, my_nrows*n, MPI_FLOAT, MASTER, MPI_COMM_WORLD);
+
+
 
 
 
@@ -252,6 +256,9 @@ int main(int argc, char** argv)
     error = sqrtf( error );
     printf("Total Iterations: %5d, ERROR: %0.6f, ", iter, error);
     printf("A[%d][%d]= %0.6f\n", n/128, n/128, A[(n/128)*n+n/128]);
+      if(n<20){
+    print_matrix(A, n,n); 
+     }
 
     free(A); free(temp);
    }
