@@ -38,7 +38,6 @@ void print_matrix(float * in, int nrows, int ncols){
     printf("\n");
     }
     printf("\n");
-
 }
 
 float my_laplace_step(float *in, float *out, int nrows, int ncols, int rowstart, int rowend)
@@ -76,16 +75,14 @@ int main(int argc, char** argv)
   float error= 1.0f;   
 
   int numtasks, rank, dest, source, tag = 1,rc;
-  int ri, rf, my_nrows, posi, posf, my_size;
+  int ri, rf, my_nrows, my_size;
   float *my_A, *my_temp;
   float my_error= 1.0f;
   MPI_Status Stat;
 
   int rowstart, rowend, nrows;
 
-
   //INIT MPI ENVIRONMENT
-
   rc = MPI_Init (&argc, &argv);
   if (rc != MPI_SUCCESS)
     {
@@ -95,15 +92,18 @@ int main(int argc, char** argv)
     }
   MPI_Comm_size (MPI_COMM_WORLD, &numtasks);
   MPI_Comm_rank (MPI_COMM_WORLD, &rank); 
-
+  
+  //Abort the program if the number of processes is less than 2
   if(numtasks < 2){
     printf ("This program works with 2 or more processes (-np N with N >=2).\n");
     MPI_Abort (MPI_COMM_WORLD, 1);
     return -1;
   }
 
+
+  //Initialisation of A, temp and initial time
   if(rank == MASTER){
-  t0 = MPI_Wtime();
+  t0 = MPI_Wtime(); //Record the initial time 
 
   // get runtime arguments 
   if (argc>1) {  n        = atoi(argv[1]); }
@@ -120,49 +120,36 @@ int main(int argc, char** argv)
   printf("Jacobi relaxation Calculation: %d x %d mesh,"
          " maximum of %d iterations\n", 
          n, n, iter_max );
-  
-  if(n<20){
-    print_matrix(A, n,n); 
- }
-
-  //send the parts of matrix to each process
-
   } 
 
+  //All processes initialise iter to 0
   int iter = 0;
 
-  //if(numtasks >1){
-  //Broadcast de global error, n and iter_max
+  //Broadcast de global (MASTER) error, n and iter_max
   MPI_Bcast(&error, 1, MPI_FLOAT, MASTER, MPI_COMM_WORLD);
   MPI_Bcast(&n, 1, MPI_INT, MASTER, MPI_COMM_WORLD);
   MPI_Bcast(&iter_max, 1, MPI_INT, MASTER, MPI_COMM_WORLD);
-  //
 
+  //Initialise some variables
   my_nrows = n/numtasks; 
   nrows = my_nrows +2;
   my_size = n*(my_nrows+2);
 
-  /*if (rank == MASTER){
-    printf("my_nrows %d, process %d\n", my_nrows ,rank);
-  }*/
-
-
+  //Alloc memory for my_A and my_temp
   my_A    = (float*) malloc( my_size*sizeof(float) );
   my_temp = (float*) malloc( my_size*sizeof(float) );
 
+  //Distribute the rows of A and temp among all the processes --> store in my_A, my_temp
   MPI_Scatter(A, my_nrows*n,  MPI_FLOAT, my_A+n, my_nrows*n, MPI_FLOAT, MASTER, MPI_COMM_WORLD);
   MPI_Scatter(temp, my_nrows*n,  MPI_FLOAT, my_temp+n, my_nrows*n, MPI_FLOAT, MASTER, MPI_COMM_WORLD);
-
-
-  ri = rank * my_nrows; //-1
-  rf = ri + my_nrows;//+1
-  posi = ri*n;
-  posf = rf*n;
+ 
 
  while ( error > tol*tol && iter < iter_max )
   {
     iter++;
-    //MPI_Send(buffer, count , type ,dest, tag, comm);
+    /*Send and Recv calls so that each process obtain two additional rows needed for
+    the computation of the new values. 
+    */
     if(rank > MASTER){
       MPI_Send(my_A+n, n, MPI_FLOAT, rank-1, tag ,MPI_COMM_WORLD);
       MPI_Recv(my_A  , n, MPI_FLOAT, rank-1, tag ,MPI_COMM_WORLD, &Stat);
@@ -172,7 +159,10 @@ int main(int argc, char** argv)
        MPI_Recv( (my_A + n*(my_nrows+1) )  , n, MPI_FLOAT, rank+1, tag ,MPI_COMM_WORLD, &Stat);
     }
 
-
+    /*Set values for rowstart and rowend in order to make all processes modify only the internal
+    points of A. We have to distinguish between the process that has the first block of rows of A
+    (the MASTER) and the one that has the last block of rows (the process numtasks-1).
+    */
     if(rank == MASTER){
       rowstart =2;
       rowend = nrows-1;
@@ -185,40 +175,34 @@ int main(int argc, char** argv)
       rowstart = 1;
       rowend = nrows-1;   
     }
-
+    //Each process perform the laplace_step updating the points of my_A that are interior points of A
     my_error= my_laplace_step(my_A, my_temp, nrows, n, rowstart, rowend);
-
+    
+    /*Reduction operation: the maximum among all my_error from all processes is calculated and stored
+    in the variable error, which is the global error and originally stored in the MASTER process*/
     MPI_Reduce(&my_error, &error, 1, MPI_FLOAT, MPI_MAX, MASTER, MPI_COMM_WORLD);
+    //Swap the roles of my_A and my_temp (double buffer) to be prepared for the next iteration.
     float *swap= my_A; my_A=my_temp; my_temp= swap;
-
-    //Bcast of error again?
   }
-
+  /*The master process gather all the final portions of A stored in my_A of each process to build
+   the matrix A corresponding to the last iteration.
+  */
   MPI_Gather(my_A+n, my_nrows*n ,  MPI_FLOAT, A, my_nrows*n, MPI_FLOAT, MASTER, MPI_COMM_WORLD);
-
+  
+  /*The MASTER process computes the final error as the sqrt of the variable error
+    and some information is printed onto the screen*/
   if(rank == MASTER){
     error = sqrtf( error );
-    //printf("Elapsed time: %1.2lf \n\n", MPI_Wtime());
     printf("Total Iterations: %5d, ERROR: %0.6f, ", iter, error);
     printf("A[%d][%d]= %0.6f\n", n/128, n/128, A[(n/128)*n+n/128]);
-      if(n<20){
-    print_matrix(A, n,n); 
-     }
-
     free(A); free(temp);
    }
-
+   /*The master process prints the execution time*/
    if(rank == MASTER){
     tf = MPI_Wtime();
-    /*printf("t0 %1.5lf \n\n", t0);
-    printf("tf: %1.5lf \n\n", tf);*/
-
     printf("Elapsed time, %2.5lf\n", tf-t0);
-
    }
-
+   //Finalize the MPI environment.
    MPI_Finalize();
-
    return 0;
-
 }
