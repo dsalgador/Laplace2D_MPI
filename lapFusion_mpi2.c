@@ -94,6 +94,8 @@ int main(int argc, char** argv)
   float my_error= 1.0f;
   MPI_Status Stat;
 
+  int rowstart, rowend, nrows;
+
 
   //INIT MPI ENVIRONMENT
 
@@ -144,6 +146,7 @@ int main(int argc, char** argv)
   //
 
   my_nrows = n/numtasks; 
+  nrows = my_nrows +2;
   my_size = n*(my_nrows+2);
 
   if (rank == MASTER){
@@ -176,36 +179,14 @@ int main(int argc, char** argv)
        MPI_Recv( (my_A + n*(my_nrows+1) )  , n, MPI_FLOAT, rank+1, tag ,MPI_COMM_WORLD, &Stat);
     }
 
-    /*MPI_Barrier(MPI_COMM_WORLD);
-    if(rank == 1){
-    printf("La matriu del procés %d és: \n", rank);
-    print_matrix(my_A, my_nrows+2,n);
-    printf("\n");
-    }
-    
-
-    MPI_Barrier(MPI_COMM_WORLD);
-
-    exit(0);
-    if(rank == MASTER){
-        printf("He passat la barrera (Master)");
-    }
-    */
-
-    int rowstart, rowend, nrows;
-    nrows = my_nrows +2;
 
     if(rank == MASTER){
       rowstart =2;
       rowend = nrows-1;
-      //my_error= my_laplace_step(my_A, my_temp, nrows, n,rowstart, rowend );
-
     }
-
     else if(rank == (numtasks - 1)){
       rowstart = 1;
       rowend = nrows -2;
-
     }
     else{
       rowstart = 1;
@@ -215,43 +196,13 @@ int main(int argc, char** argv)
     my_error= my_laplace_step(my_A, my_temp, nrows, n, rowstart, rowend);
 
     MPI_Reduce(&my_error, &error, 1, MPI_FLOAT, MPI_MAX, MASTER, MPI_COMM_WORLD);
-
-    //float *swap= A; A=temp; temp= swap; // swap pointers A & temp
     float *swap= my_A; my_A=my_temp; my_temp= swap;
 
     //Bcast of error again?
   }
 
-  //Send the new portions of matrix to MASTER
-    /*MPI_Gather(
-    void* send_data,
-    int send_count,
-    MPI_Datatype send_datatype,
-    void* recv_data,
-    int recv_count,
-    MPI_Datatype recv_datatype,
-    int root,
-    MPI_Comm communicator)*/
-
-  //MPI_Gather(A, my_nrows*n,  MPI_FLOAT, my_A+n, my_nrows*n, MPI_FLOAT, MASTER, MPI_COMM_WORLD);
   MPI_Gather(my_A+n, my_nrows*n ,  MPI_FLOAT, A, my_nrows*n, MPI_FLOAT, MASTER, MPI_COMM_WORLD);
 
-
-
-
-
-
- //}
-
-
-  /*
-  while ( error > tol*tol && iter < iter_max )
-  {
-    iter++;
-    error= laplace_step (A, temp, n);
-    float *swap= A; A=temp; temp= swap; // swap pointers A & temp
-  }
-*/
   if(rank == MASTER){
     error = sqrtf( error );
     printf("Total Iterations: %5d, ERROR: %0.6f, ", iter, error);
