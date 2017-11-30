@@ -56,11 +56,11 @@ void print_matrix(float * in, int nrows, int ncols){
 
 }
 
-float my_laplace_step(float *in, float *out, int nrows, int ncols)
+float my_laplace_step(float *in, float *out, int nrows, int ncols, int rowstart, int rowend)
 {
   int i, j;
   float my_error=0.0f;
-  for ( j=1; j < nrows-1; j++ )
+  for ( j=rowstart; j < rowend; j++ )
     #pragma omp simd reduction(max:my_error)
     for ( i=1; i < ncols-1; i++ )
     {
@@ -192,29 +192,29 @@ int main(int argc, char** argv)
     }
     */
 
-
-    my_error= my_laplace_step(my_A, my_temp, my_nrows +2, n);
-
-    MPI_Reduce(&my_error, &error, 1, MPI_FLOAT, MPI_MAX, MASTER, MPI_COMM_WORLD);
-
-
-
-
-
-    /*if(rank != MASTER){
-          MPI_Send(&my_A[n] , n*my_nrows, MPI_FLOAT, MASTER, tag ,MPI_COMM_WORLD);
-    }
+    int rowstart, rowend, nrows;
+    nrows = my_nrows +2;
 
     if(rank == MASTER){
-        for(int id = 1; id< numtasks;id++){
-          //assuming my_nrows of the MASTER is the same as for the others
-            MPI_Recv(&A[id*my_nrows*n] , n*my_nrows, MPI_FLOAT, id, tag ,MPI_COMM_WORLD, &Stat);
-       }
-       my_init(my_A,A, 1 , my_nrows-2,ri, rf, n); 
+      rowstart =2;
+      rowend = nrows-1;
+      //my_error= my_laplace_step(my_A, my_temp, nrows, n,rowstart, rowend );
+
     }
-    */
 
+    else if(rank == (numtasks - 1)){
+      rowstart = 1;
+      rowend = nrows -2;
 
+    }
+    else{
+      rowstart = 1;
+      rowend = nrows-1;   
+    }
+
+    my_error= my_laplace_step(my_A, my_temp, nrows, n, rowstart, rowend);
+
+    MPI_Reduce(&my_error, &error, 1, MPI_FLOAT, MPI_MAX, MASTER, MPI_COMM_WORLD);
 
     //float *swap= A; A=temp; temp= swap; // swap pointers A & temp
     float *swap= my_A; my_A=my_temp; my_temp= swap;
