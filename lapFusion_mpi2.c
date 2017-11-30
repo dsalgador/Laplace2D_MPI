@@ -106,9 +106,14 @@ int main(int argc, char** argv)
       MPI_Abort (MPI_COMM_WORLD, rc);
       return -1;
     }
-
   MPI_Comm_size (MPI_COMM_WORLD, &numtasks);
   MPI_Comm_rank (MPI_COMM_WORLD, &rank); 
+
+  if(numtasks < 2){
+    printf ("This program works with 2 or more processes (-np N with N >=2).\n");
+    MPI_Abort (MPI_COMM_WORLD, 1);
+    return -1;
+  }
 
   if(rank == MASTER){
 
