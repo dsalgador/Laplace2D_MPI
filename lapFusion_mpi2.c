@@ -55,6 +55,21 @@ void print_matrix(float * in, int nrows, int ncols){
     printf("\n");
 
 }
+
+float my_laplace_step(float *in, float *out, int nrows, int ncols)
+{
+  int i, j;
+  float my_error=0.0f;
+  for ( j=1; j < nrows-1; j++ )
+    #pragma omp simd reduction(max:my_error)
+    for ( i=1; i < ncols-1; i++ )
+    {
+      out[j*ncols+i]= stencil(in[j*ncols+i+1], in[j*ncols+i-1], in[(j-1)*ncols+i], in[(j+1)*ncols+i]);
+      my_error = max_error( my_error, out[j*ncols+i], in[j*ncols+i] );
+    }
+  return my_error;
+}
+
 /*
 Commands to test this version
 module load gcc/6.1.0
@@ -161,7 +176,7 @@ int main(int argc, char** argv)
        MPI_Recv( (my_A + n*(my_nrows+1) )  , n, MPI_FLOAT, rank+1, tag ,MPI_COMM_WORLD, &Stat);
     }
 
-    MPI_Barrier(MPI_COMM_WORLD);
+    /*MPI_Barrier(MPI_COMM_WORLD);
     if(rank == 1){
     printf("La matriu del procés %d és: \n", rank);
     print_matrix(my_A, my_nrows+2,n);
@@ -172,14 +187,50 @@ int main(int argc, char** argv)
     MPI_Barrier(MPI_COMM_WORLD);
 
     exit(0);
-
-
     if(rank == MASTER){
         printf("He passat la barrera (Master)");
     }
+    */
 
-    error= laplace_step(A, temp, n);
-    float *swap= A; A=temp; temp= swap; // swap pointers A & temp
+
+    my_error= my_laplace_step(my_A, my_temp, my_nrows +2, n);
+
+    MPI_Reduce(&my_error, &error, 1, MPI_FLOAT, MPI_MAX, MASTER, MPI_COMM_WORLD);
+
+    //Send the new portions of matrix to MASTER
+    /*MPI_Gather(
+    void* send_data,
+    int send_count,
+    MPI_Datatype send_datatype,
+    void* recv_data,
+    int recv_count,
+    MPI_Datatype recv_datatype,
+    int root,
+    MPI_Comm communicator)*/
+
+
+
+
+
+    /*if(rank != MASTER){
+          MPI_Send(&my_A[n] , n*my_nrows, MPI_FLOAT, MASTER, tag ,MPI_COMM_WORLD);
+    }
+
+    if(rank == MASTER){
+        for(int id = 1; id< numtasks;id++){
+          //assuming my_nrows of the MASTER is the same as for the others
+            MPI_Recv(&A[id*my_nrows*n] , n*my_nrows, MPI_FLOAT, id, tag ,MPI_COMM_WORLD, &Stat);
+       }
+       my_init(my_A,A, 1 , my_nrows-2,ri, rf, n); 
+    }
+    */
+
+
+
+    //float *swap= A; A=temp; temp= swap; // swap pointers A & temp
+    float *swap= my_A; my_A=my_temp; my_temp= swap;
+
+    //Bcast of error again?
   }
 
 
