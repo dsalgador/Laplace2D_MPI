@@ -80,7 +80,9 @@ mpirun -np 3 mpi_lapFusion2 12 2
 */
 
 int main(int argc, char** argv)
-{
+{  
+  double t0, tf;
+
   int n = 4096;
   int iter_max = 1000;
   float *A, *temp;
@@ -116,6 +118,7 @@ int main(int argc, char** argv)
   }
 
   if(rank == MASTER){
+  t0 = MPI_Wtime();
 
   // get runtime arguments 
   if (argc>1) {  n        = atoi(argv[1]); }
@@ -154,9 +157,9 @@ int main(int argc, char** argv)
   nrows = my_nrows +2;
   my_size = n*(my_nrows+2);
 
-  if (rank == MASTER){
+  /*if (rank == MASTER){
     printf("my_nrows %d, process %d\n", my_nrows ,rank);
-  }
+  }*/
 
 
   my_A    = (float*) malloc( my_size*sizeof(float) );
@@ -210,6 +213,7 @@ int main(int argc, char** argv)
 
   if(rank == MASTER){
     error = sqrtf( error );
+    //printf("Elapsed time: %1.2lf \n\n", MPI_Wtime());
     printf("Total Iterations: %5d, ERROR: %0.6f, ", iter, error);
     printf("A[%d][%d]= %0.6f\n", n/128, n/128, A[(n/128)*n+n/128]);
       if(n<20){
@@ -218,6 +222,16 @@ int main(int argc, char** argv)
 
     free(A); free(temp);
    }
+
+   if(rank == MASTER){
+    tf = MPI_Wtime();
+    /*printf("t0 %1.5lf \n\n", t0);
+    printf("tf: %1.5lf \n\n", tf);*/
+
+    printf("Elapsed time, %2.5lf\n", tf-t0);
+
+   }
+
    MPI_Finalize();
 
    return 0;
