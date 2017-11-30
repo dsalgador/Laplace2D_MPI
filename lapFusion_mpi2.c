@@ -55,6 +55,14 @@ void print_matrix(float * in, int nrows, int ncols){
     printf("\n");
 
 }
+/*
+Commands to test this version
+module load gcc/6.1.0
+module load mpe2/mpi-1.10.2/2.4.8
+mpicc -g -lm -o mpi_lapFusion2 lapFusion_mpi2.c
+
+mpirun -np 3 mpi_lapFusion2 12 2
+*/
 
 int main(int argc, char** argv)
 {
@@ -158,7 +166,7 @@ int main(int argc, char** argv)
     printf("La matriu del procés %d és: \n", rank);
     print_matrix(my_A, my_nrows+2,n);
     printf("\n");
-  }
+    }
     
 
     MPI_Barrier(MPI_COMM_WORLD);
