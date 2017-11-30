@@ -44,6 +44,7 @@ float my_laplace_step(float *in, float *out, int nrows, int ncols, int rowstart,
 {
   int i, j;
   float my_error=0.0f;
+  //#pragma omp for
   for ( j=rowstart; j < rowend; j++ )
     #pragma omp simd reduction(max:my_error)
     for ( i=1; i < ncols-1; i++ )
@@ -58,10 +59,13 @@ float my_laplace_step(float *in, float *out, int nrows, int ncols, int rowstart,
 Commands to run the code:
 module load gcc/6.1.0
 module load mpe2/mpi-1.10.2/2.4.8
-mpicc -g -lm -fopenmp -o mpi_lapFusion2 lapFusion_mpi2.c
+mpicc -g -lm -Wall -fopenmp -o mpi_lapFusion_omp lapFusion_mpi_omp.c
 
-mpirun -np N mpi_lapFusion2 n iter_max
+export OMP_NUM_THREADS = numthreads //ex: numthreads = 2
+mpirun -np N mpi_lapFusion_omp n iter_max
+EX: mpirun -np 2 mpi_lapFusion_omp 100 10
 */
+
 
 int main(int argc, char** argv)
 {  
@@ -143,7 +147,6 @@ int main(int argc, char** argv)
   MPI_Scatter(A, my_nrows*n,  MPI_FLOAT, my_A+n, my_nrows*n, MPI_FLOAT, MASTER, MPI_COMM_WORLD);
   MPI_Scatter(temp, my_nrows*n,  MPI_FLOAT, my_temp+n, my_nrows*n, MPI_FLOAT, MASTER, MPI_COMM_WORLD);
  
-
  while ( error > tol*tol && iter < iter_max )
   {
     iter++;
@@ -175,8 +178,12 @@ int main(int argc, char** argv)
       rowstart = 1;
       rowend = nrows-1;   
     }
+
+    #pragma omp parallel firstprivate(my_A, my_temp) //copyin(iter, my_error)
+    {
     //Each process perform the laplace_step updating the points of my_A that are interior points of A
     my_error= my_laplace_step(my_A, my_temp, nrows, n, rowstart, rowend);
+    }
     
     /*Reduction operation: the maximum among all my_error from all processes is calculated and stored
     in the variable error, which is the global error and originally stored in the MASTER process*/
