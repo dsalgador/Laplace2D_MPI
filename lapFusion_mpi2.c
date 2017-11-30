@@ -55,12 +55,12 @@ float my_laplace_step(float *in, float *out, int nrows, int ncols, int rowstart,
 }
 
 /*
-Commands to test this version
+Commands to run the code:
 module load gcc/6.1.0
 module load mpe2/mpi-1.10.2/2.4.8
 mpicc -g -lm -fopenmp -o mpi_lapFusion2 lapFusion_mpi2.c
 
-mpirun -np 3 mpi_lapFusion2 12 2
+mpirun -np N mpi_lapFusion2 n iter_max
 */
 
 int main(int argc, char** argv)
@@ -74,8 +74,8 @@ int main(int argc, char** argv)
   const float tol = 1.0e-5f;
   float error= 1.0f;   
 
-  int numtasks, rank, dest, source, tag = 1,rc;
-  int ri, rf, my_nrows, my_size;
+  int numtasks, rank, tag = 1,rc;
+  int  my_nrows, my_size;
   float *my_A, *my_temp;
   float my_error= 1.0f;
   MPI_Status Stat;
