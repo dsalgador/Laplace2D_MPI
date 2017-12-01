@@ -136,8 +136,17 @@ int main(int argc, char** argv)
   my_size = n*(my_nrows+2);
 
   //Alloc memory for my_A and my_temp
-  my_A    = (float*) malloc( my_size*sizeof(float) );
-  my_temp = (float*) malloc( my_size*sizeof(float) );
+  if( (my_A    = (float*) malloc( my_size*sizeof(float) )) == NULL ){
+    printf ("Error when allocating memory for my_A.\n");
+    MPI_Abort (MPI_COMM_WORLD, 1);
+    return -1;
+  }
+  if( (my_temp    = (float*) malloc( my_size*sizeof(float) )) == NULL ){
+    printf ("Error when allocating memory for my_temp.\n");
+    MPI_Abort (MPI_COMM_WORLD, 1);
+    return -1;
+  }
+ // my_temp = (float*) malloc( my_size*sizeof(float) );
 
   //Distribute the rows of A and temp among all the processes --> store in my_A, my_temp
   MPI_Scatter(A, my_nrows*n,  MPI_FLOAT, my_A+n, my_nrows*n, MPI_FLOAT, MASTER, MPI_COMM_WORLD);
