@@ -158,16 +158,17 @@ int main(int argc, char** argv)
     iter++;
     /*Send and Recv calls so that each process obtain two additional rows needed for
     the computation of the new values. 
-    */
+    */   
+
     if(rank > MASTER){
       MPI_Send(my_A+n, n, MPI_FLOAT, rank-1, tag ,MPI_COMM_WORLD);
       MPI_Recv(my_A  , n, MPI_FLOAT, rank-1, tag ,MPI_COMM_WORLD, &Stat);
     }
     if(rank < numtasks -1 ){
-       MPI_Send(  (my_A + n*(my_nrows))  , n, MPI_FLOAT, rank+1, tag ,MPI_COMM_WORLD);
        MPI_Recv( (my_A + n*(my_nrows+1) )  , n, MPI_FLOAT, rank+1, tag ,MPI_COMM_WORLD, &Stat);
+       MPI_Send(  (my_A + n*(my_nrows))  , n, MPI_FLOAT, rank+1, tag ,MPI_COMM_WORLD);       
     }
-
+    
     /*Set values for rowstart and rowend in order to make all processes modify only the internal
     points of A. We have to distinguish between the process that has the first block of rows of A
     (the MASTER) and the one that has the last block of rows (the process numtasks-1).
