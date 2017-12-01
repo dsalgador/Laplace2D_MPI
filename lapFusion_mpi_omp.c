@@ -44,7 +44,7 @@ float my_laplace_step(float *in, float *out, int nrows, int ncols, int rowstart,
 {
   int i, j;
   float my_error=0.0f;
-  //#pragma omp for
+  #pragma omp for
   for ( j=rowstart; j < rowend; j++ )
     #pragma omp simd reduction(max:my_error)
     for ( i=1; i < ncols-1; i++ )
@@ -147,6 +147,7 @@ int main(int argc, char** argv)
   MPI_Scatter(A, my_nrows*n,  MPI_FLOAT, my_A+n, my_nrows*n, MPI_FLOAT, MASTER, MPI_COMM_WORLD);
   MPI_Scatter(temp, my_nrows*n,  MPI_FLOAT, my_temp+n, my_nrows*n, MPI_FLOAT, MASTER, MPI_COMM_WORLD);
  
+
  while ( error > tol*tol && iter < iter_max )
   {
     iter++;
