@@ -38,6 +38,8 @@
 #define m 4096
 #endif
 
+#define MASTER 0        /* task ID of master task */
+
 float A[n][m];
 float Anew[n][m];
 float y[n];
@@ -86,9 +88,11 @@ int main(int argc, char** argv)
     }
 
     MPI_Comm_size (MPI_COMM_WORLD, &numtasks);
+
     MPI_Comm_rank (MPI_COMM_WORLD, &rank);
 
-    if(rank == 0){
+    if(rank == MASTER){
+       
 
     while ( error > tol && iter < iter_max )
     {
