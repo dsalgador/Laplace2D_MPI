@@ -50,3 +50,25 @@ where M is the number of nodes that one wants to use. To run with 4 nodes the co
 mpirun -np 4 mpi_lapFusion 1024 100
 ```
 
+## Test cases
+
+### Test 1
+
+* Description
+
+* Documentation
+
+### Test 2
+
+* Description
+
+* Documentation
+
+### Test 3
+
+* Description
+
+* Documentation
+
+### Test 4
+
