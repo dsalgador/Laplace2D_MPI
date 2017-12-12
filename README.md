@@ -10,5 +10,5 @@ ParallelProgr-MPI.pdf
 Implement a working version of this algorithm (remember that you can assume that *m* is divisible by *N*). The code must be properly documented. You must include all the necessary information for running your code and indicate the test cases you have used.
 
 
-![GitHub Logo](/images/logo.png)
+![GitHub Logo](http://tutorial.math.lamar.edu/Classes/DE/LaplacesEqn_files/eq0005P.gif)
 Format: ![Alt Text](url). 
