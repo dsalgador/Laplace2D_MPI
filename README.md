@@ -7,8 +7,8 @@
 
 # Problem description
 
-The theoretical information about the problem can be fount in 
-`ParallelProgr-MPI.pdf`.
+The theoretical information about the problem can be fount in [a relative link](ParallelProgr-MPI.pdf).
+
 
 ## Mathematical problem
 
