@@ -1,9 +1,24 @@
+/*
+Basic MPI implementation of the Laplace 2D algorithm using the Jacobi Method.
+A grid m x n is assumed and if N is the number of nodes to which distribute work,
+it has to be satisfied that m (number of rows) is divisible by N.
+
+As a first approach we assume that n = m, so that we have a grid n x n with N divisible
+by n.
+
+  Autors:
+      Josep Castell,
+      Dani Salgado, 
+*/
+
+// Libraries
 #include <math.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <mpi.h>
 
+//Definitions
 #define MASTER 0        /* task ID of master task */
 
 float stencil ( float v1, float v2, float v3, float v4)
@@ -17,6 +32,9 @@ float max_error ( float prev_error, float old, float new )
   return t>prev_error? t: prev_error;
 }
 
+/*Initialisation of the grid: internal points set to 0
+  and boundary conditions initialised according to the PDF of 
+  this assignemnt*/
 void laplace_init(float *in, int n)
 {
   int i;
@@ -28,6 +46,9 @@ void laplace_init(float *in, int n)
   }
 }
 
+
+/*Given a matrix * in with nrows rows and ncols columns
+  prints it on the console in a representative way*/
 void print_matrix(float * in, int nrows, int ncols){
     int i,j;
     for ( j=0; j < nrows; j++ ){
@@ -40,6 +61,14 @@ void print_matrix(float * in, int nrows, int ncols){
     printf("\n");
 }
 
+/*
+ This is quite the same as the laplace_step function from the original code
+ lapFusion.c. Now my_laplace_step is a function called by each Process to update
+ its part of the matrix A (stored in 'my_A'). The part of matrix for each process,
+ my_A, has 'nrows' rows and 'ncols' columns. We add also the two parameters 
+ 'rowstart' and 'rowend' that allow us to decide from which row to wich row my_A is updated
+ by the Process that is calling my_laplace_step() function.
+ */
 float my_laplace_step(float *in, float *out, int nrows, int ncols, int rowstart, int rowend)
 {
   int i, j;
@@ -58,23 +87,24 @@ float my_laplace_step(float *in, float *out, int nrows, int ncols, int rowstart,
 Commands to run the code:
 module load gcc/6.1.0
 module load mpe2/mpi-1.10.2/2.4.8
-mpicc -g -lm -fopenmp -o mpi_lapFusion2 lapFusion_mpi2.c
+mpicc -g -lm -fopenmp -o mpi_lapFusion lapFusion_mpi.c
 
-mpirun -np N mpi_lapFusion2 n iter_max
+mpirun -np N mpi_lapFusion n iter_max
 */
 
 int main(int argc, char** argv)
-{  
-  double t0, tf;
+{   
+  // Initalisation of variables
+  double t0, tf; /*Initial and final time counters*/
 
-  int n = 4096;
-  int iter_max = 1000;
-  float *A, *temp;
+  int n = 4096; /* Size of the grid n x n */
+  int iter_max = 1000; /* Number of iterations */
+  float *A, *temp; /* Pointers to grid A and temp */
     
-  const float tol = 1.0e-5f;
-  float error= 1.0f;   
+  const float tol = 1.0e-5f; /* Tolerance */
+  float error= 1.0f; /* Global error variable */   
 
-  int numtasks, rank, tag = 1,rc;
+  int numtasks, rank, tag = 1,rc; /* */
   int  my_nrows, my_size;
   float *my_A, *my_temp;
   float my_error= 1.0f;
