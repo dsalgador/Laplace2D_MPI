@@ -104,15 +104,15 @@ int main(int argc, char** argv)
   const float tol = 1.0e-5f; /* Tolerance */
   float error= 1.0f; /* Global error variable */   
 
-  int numtasks, rank, tag = 1,rc; /* */
-  int  my_nrows, my_size;
-  float *my_A, *my_temp;
-  float my_error= 1.0f;
-  MPI_Status Stat;
+  int numtasks, rank, tag = 1,rc; /* Nº of processes, process ID, tag, rc */
+  int  my_nrows, my_size; /* Number of rows of my_A, dimension of my_A*/
+  float *my_A, *my_temp; /* Portion of A carried by each process*/
+  float my_error= 1.0f; /* Error for each process*/
+  MPI_Status Stat; /* MPI status variable to control the status*/
 
-  int rowstart, rowend, nrows;
+  int rowstart, rowend, nrows; /*Auxiliar variables related to rows*/
 
-  //INIT MPI ENVIRONMENT
+  //INIT MPI environment
   rc = MPI_Init (&argc, &argv);
   if (rc != MPI_SUCCESS)
     {
@@ -122,8 +122,10 @@ int main(int argc, char** argv)
     }
   MPI_Comm_size (MPI_COMM_WORLD, &numtasks);
   MPI_Comm_rank (MPI_COMM_WORLD, &rank); 
-  
-  //Abort the program if the number of processes is less than 2
+  //END basic INIT MPI environment
+
+
+  // Abort the program if the number of processes is less than 2
   if(numtasks < 2){
     printf ("This program works with 2 or more processes (-np N with N >=2).\n");
     MPI_Abort (MPI_COMM_WORLD, 1);
@@ -131,18 +133,27 @@ int main(int argc, char** argv)
   }
 
 
-  //Initialisation of A, temp and initial time
+  //BEGIN MASTER Initialisation of A, temp and initial time
   if(rank == MASTER){
   t0 = MPI_Wtime(); //Record the initial time 
 
   // get runtime arguments 
   if (argc>1) {  n        = atoi(argv[1]); }
   if (argc>2) {  iter_max = atoi(argv[2]); }
+  
+  // Allocate memory for A and temp
+  if( ( A = (float*) malloc(n*n*sizeof(float)) ) == NULL ){
+    printf ("Error when allocating memory for A.\n");
+    MPI_Abort (MPI_COMM_WORLD, 1);
+    return -1;
+  }
+  if( ( temp = (float*) malloc(n*n*sizeof(float)) ) == NULL ){
+    printf ("Error when allocating memory for temp.\n");
+    MPI_Abort (MPI_COMM_WORLD, 1);
+    return -1;
+  }
 
-  A    = (float*) malloc( n*n*sizeof(float) );
-  temp = (float*) malloc( n*n*sizeof(float) );
-
-  //  set boundary conditions
+  // set boundary conditions
   laplace_init (A, n);
   laplace_init (temp, n);
   A[(n/128)*n+n/128] = 1.0f; // set singular point
@@ -150,7 +161,7 @@ int main(int argc, char** argv)
   printf("Jacobi relaxation Calculation: %d x %d mesh,"
          " maximum of %d iterations\n", 
          n, n, iter_max );
-  } 
+  } //END MASTER initialisation
 
   //All processes initialise iter to 0
   int iter = 0;
@@ -160,23 +171,22 @@ int main(int argc, char** argv)
   MPI_Bcast(&n, 1, MPI_INT, MASTER, MPI_COMM_WORLD);
   MPI_Bcast(&iter_max, 1, MPI_INT, MASTER, MPI_COMM_WORLD);
 
-  //Initialise some variables
+  //Initialise some auxiliar variables
   my_nrows = n/numtasks; 
   nrows = my_nrows +2;
   my_size = n*(my_nrows+2);
 
-  //Alloc memory for my_A and my_temp
-  if( (my_A    = (float*) malloc( my_size*sizeof(float) )) == NULL ){
+  //Allocate memory for my_A and my_temp
+  if( ( my_A = (float*) malloc( my_size*sizeof(float)) ) == NULL ){
     printf ("Error when allocating memory for my_A.\n");
     MPI_Abort (MPI_COMM_WORLD, 1);
     return -1;
   }
-  if( (my_temp    = (float*) malloc( my_size*sizeof(float) )) == NULL ){
+  if( ( my_temp = (float*) malloc(my_size*sizeof(float)) ) == NULL ){
     printf ("Error when allocating memory for my_temp.\n");
     MPI_Abort (MPI_COMM_WORLD, 1);
     return -1;
   }
- // my_temp = (float*) malloc( my_size*sizeof(float) );
 
   //Distribute the rows of A and temp among all the processes --> store in my_A, my_temp
   MPI_Scatter(A, my_nrows*n,  MPI_FLOAT, my_A+n, my_nrows*n, MPI_FLOAT, MASTER, MPI_COMM_WORLD);
