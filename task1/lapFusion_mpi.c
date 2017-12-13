@@ -210,12 +210,20 @@ int main(int argc, char** argv)
     the computation of the new values. 
     */   
 
-    if(rank > MASTER){
+    if(rank > MASTER){ 
+      //For all the processes apart from MASTER, which does not need a previous row
+
+      /* Send the first row of the process 'rank' to the process 'rank-1'*/
       MPI_Send(my_A+n, n, MPI_FLOAT, rank-1, tag ,MPI_COMM_WORLD);
+      /* Process 'rank' recieves the last row from the process 'rank-1'*/
       MPI_Recv(my_A  , n, MPI_FLOAT, rank-1, tag ,MPI_COMM_WORLD, &Stat);
     }
     if(rank < numtasks -1 ){
+       //For all the processes apart from THE LAST, which does not need a 'last' row
+
+       /* Process 'rank' recieves the first row from the process 'rank+1'*/
        MPI_Recv( (my_A + n*(my_nrows+1) )  , n, MPI_FLOAT, rank+1, tag ,MPI_COMM_WORLD, &Stat);
+       /* Send the last row of the process 'rank' to the process 'rank+1'*/
        MPI_Send(  (my_A + n*(my_nrows))  , n, MPI_FLOAT, rank+1, tag ,MPI_COMM_WORLD);       
     }
     
@@ -235,7 +243,7 @@ int main(int argc, char** argv)
       rowstart = 1;
       rowend = nrows-1;   
     }
-    //Each process perform the laplace_step updating the points of my_A that are interior points of A
+    //Each process performs the laplace_step updating the points of my_A that are interior points of A
     my_error= my_laplace_step(my_A, my_temp, nrows, n, rowstart, rowend);
     
     /*Reduction operation: the maximum among all my_error from all processes is calculated and stored
@@ -244,7 +252,7 @@ int main(int argc, char** argv)
     //Swap the roles of my_A and my_temp (double buffer) to be prepared for the next iteration.
     float *swap= my_A; my_A=my_temp; my_temp= swap;
   }
-  /*The master process gather all the final portions of A stored in my_A of each process to build
+  /*The master process gathers all the final portions of A stored in my_A of each process to build
    the matrix A corresponding to the last iteration.
   */
   MPI_Gather(my_A+n, my_nrows*n ,  MPI_FLOAT, A, my_nrows*n, MPI_FLOAT, MASTER, MPI_COMM_WORLD);
