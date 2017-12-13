@@ -83,6 +83,14 @@ float my_laplace_step(float *in, float *out, int nrows, int ncols, int rowstart,
   return my_error;
 }
 
+void copy_A_to_temp(float *A, float * *temp, int nrows, int ncols){
+    for(int j = 0; j < nrows; j++){
+      for(int i = 0; i < ncols; i++){
+        (*temp)[j*ncols +i] = A[j*ncols +i];
+      }
+    }
+}
+
 /*
 Commands to run the code:
 module load gcc/6.1.0
@@ -190,7 +198,9 @@ int main(int argc, char** argv)
 
   //Distribute the rows of A and temp among all the processes --> store in my_A, my_temp
   MPI_Scatter(A, my_nrows*n,  MPI_FLOAT, my_A+n, my_nrows*n, MPI_FLOAT, MASTER, MPI_COMM_WORLD);
-  MPI_Scatter(temp, my_nrows*n,  MPI_FLOAT, my_temp+n, my_nrows*n, MPI_FLOAT, MASTER, MPI_COMM_WORLD);
+  float * my_temp_plusn = my_temp+n;
+  copy_A_to_temp(my_A+n, &my_temp_plusn, my_nrows, n);
+  //MPI_Scatter(temp, my_nrows*n,  MPI_FLOAT, my_temp+n, my_nrows*n, MPI_FLOAT, MASTER, MPI_COMM_WORLD);
  
 
  while ( error > tol*tol && iter < iter_max )
