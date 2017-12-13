@@ -215,7 +215,7 @@ int main(int argc, char** argv)
     the computation of the new values. 
     */   
     
-    if( (iter % k) == 0 )
+    if( ( (iter+1) % k) == 0 || iter == 1)
     {    
       if(rank > MASTER){ 
         //For all the processes apart from MASTER, which does not need a previous row
@@ -241,23 +241,26 @@ int main(int argc, char** argv)
     (the MASTER) and the one that has the last block of rows (the process numtasks-1).
     */
     if(rank == MASTER){
-      rowstart = 1+k;//2
-      rowend = nrows-1;//nrows -1 
+      rowstart = 2;//2     1+k
+      rowend = nrows-1;//nrows -1        nrows-k
     }
     else if(rank == (numtasks - 1)){
-      rowstart = k; //1
-      rowend = nrows - (1+k); // nrows -2 
+      rowstart = 1; //1
+      rowend = nrows - 2; // nrows -2     nrows - (1+k)
     }
     else{
-      rowstart = k; //1
-      rowend = nrows-k; //nrows-1   
+      rowstart = 1; //1      k
+      rowend = nrows-1; //nrows-1       nrows-k
     }
     //Each process performs the laplace_step updating the points of my_A that are interior points of A
     my_error= my_laplace_step(my_A, my_temp, nrows, n, rowstart, rowend);
     
     /*Reduction operation: the maximum among all my_error from all processes is calculated and stored
     in the variable error, which is the global error and originally stored in the MASTER process*/
+    /*if( (iter % k) == 0 )
+    {  */ 
     MPI_Reduce(&my_error, &error, 1, MPI_FLOAT, MPI_MAX, MASTER, MPI_COMM_WORLD);
+    //}
     //Swap the roles of my_A and my_temp (double buffer) to be prepared for the next iteration.
     float *swap= my_A; my_A=my_temp; my_temp= swap;
   }
@@ -274,6 +277,7 @@ int main(int argc, char** argv)
     error = sqrtf( error );
     printf("Total Iterations: %5d, ERROR: %0.6f, ", iter, error);
     printf("A[%d][%d]= %0.6f\n", n/128, n/128, A[(n/128)*n+n/128]);
+    print_matrix(A, n, n);
     free(A); free(temp);
    }
    /*The master process prints the execution time*/
