@@ -215,7 +215,7 @@ int main(int argc, char** argv)
     the computation of the new values. 
     */   
     
-    if( ( (iter+1) % k) == 0 || iter == 1)
+    if( ( (iter-1) % k) == 0 )
     {    
       if(rank > MASTER){ 
         //For all the processes apart from MASTER, which does not need a previous row
@@ -229,9 +229,9 @@ int main(int argc, char** argv)
          //For all the processes apart from THE LAST, which does not need a 'last' row
 
          /* Process 'rank' recieves the first k rows from the process 'rank+1'*/
-         MPI_Recv( (my_A + n*(my_nrows-k+2) )  , n*k, MPI_FLOAT, rank+1, tag ,MPI_COMM_WORLD, &Stat);
+         MPI_Recv( (my_A + n*(nrows-k) )  , n*k, MPI_FLOAT, rank+1, tag ,MPI_COMM_WORLD, &Stat);
          /* Send the last k rows of the process 'rank' to the process 'rank+1'*/
-         MPI_Send(  (my_A + n*(my_nrows-k+1))  , n*k, MPI_FLOAT, rank+1, tag ,MPI_COMM_WORLD);       
+         MPI_Send(  (my_A + n*(my_nrows))  , n*k, MPI_FLOAT, rank+1, tag ,MPI_COMM_WORLD);       
       }
 
     } //endif iter % k
@@ -241,12 +241,12 @@ int main(int argc, char** argv)
     (the MASTER) and the one that has the last block of rows (the process numtasks-1).
     */
     if(rank == MASTER){
-      rowstart = 2;//2     1+k
+      rowstart = 1+k;//2     1+k
       rowend = nrows-1;//nrows -1        nrows-k
     }
     else if(rank == (numtasks - 1)){
       rowstart = 1; //1
-      rowend = nrows - 2; // nrows -2     nrows - (1+k)
+      rowend = nrows - (1+k); // nrows -2     nrows - (1+k)
     }
     else{
       rowstart = 1; //1      k
@@ -259,7 +259,10 @@ int main(int argc, char** argv)
     in the variable error, which is the global error and originally stored in the MASTER process*/
     /*if( (iter % k) == 0 )
     {  */ 
+    if( ( (iter-1) % k) == 0 )
+    {    
     MPI_Reduce(&my_error, &error, 1, MPI_FLOAT, MPI_MAX, MASTER, MPI_COMM_WORLD);
+     }
     //}
     //Swap the roles of my_A and my_temp (double buffer) to be prepared for the next iteration.
     float *swap= my_A; my_A=my_temp; my_temp= swap;
@@ -268,7 +271,8 @@ int main(int argc, char** argv)
    the matrix A corresponding to the last iteration.
   */
   //MPI_Scatter(A, my_nrows*n,  MPI_FLOAT, my_A+starting, my_nrows*n, MPI_FLOAT, MASTER, MPI_COMM_WORLD);
- 
+  MPI_Reduce(&my_error, &error, 1, MPI_FLOAT, MPI_MAX, MASTER, MPI_COMM_WORLD);
+
   MPI_Gather(my_A+starting, my_nrows*n ,  MPI_FLOAT, A, my_nrows*n, MPI_FLOAT, MASTER, MPI_COMM_WORLD);
   
   /*The MASTER process computes the final error as the sqrt of the variable error
