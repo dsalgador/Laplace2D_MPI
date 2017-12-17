@@ -203,9 +203,9 @@ int main(int argc, char** argv)
   //int ending = n*k;
   //Distribute the rows of A and temp among all the processes --> store in my_A, my_temp
   MPI_Scatter(A, my_nrows*n,  MPI_FLOAT, my_A+starting, my_nrows*n, MPI_FLOAT, MASTER, MPI_COMM_WORLD);
-  //float * my_temp_plusnk = my_temp+starting;
-  //copy_A_to_temp(my_A+starting, &my_temp_plusnk, my_nrows, n);
-  MPI_Scatter(temp, my_nrows*n,  MPI_FLOAT, my_temp+starting, my_nrows*n, MPI_FLOAT, MASTER, MPI_COMM_WORLD);
+  float * my_temp_plusnk = my_temp+starting;
+  copy_A_to_temp(my_A+starting, &my_temp_plusnk, my_nrows, n);
+  //MPI_Scatter(temp, my_nrows*n,  MPI_FLOAT, my_temp+starting, my_nrows*n, MPI_FLOAT, MASTER, MPI_COMM_WORLD);
  
 
  while ( error > tol*tol && iter < iter_max )
@@ -257,21 +257,19 @@ int main(int argc, char** argv)
     
     /*Reduction operation: the maximum among all my_error from all processes is calculated and stored
     in the variable error, which is the global error and originally stored in the MASTER process*/
-    /*if( (iter % k) == 0 )
-    {  */ 
-    if( ( (iter-1) % k) == 0 )
-    {    
+ 
+    /*if( ( (iter-1) % k) == 0 )
+    {  */
     MPI_Reduce(&my_error, &error, 1, MPI_FLOAT, MPI_MAX, MASTER, MPI_COMM_WORLD);
-     }
-    //}
+    // }
+
     //Swap the roles of my_A and my_temp (double buffer) to be prepared for the next iteration.
     float *swap= my_A; my_A=my_temp; my_temp= swap;
   }
   /*The master process gathers all the final portions of A stored in my_A of each process to build
    the matrix A corresponding to the last iteration.
   */
-  //MPI_Scatter(A, my_nrows*n,  MPI_FLOAT, my_A+starting, my_nrows*n, MPI_FLOAT, MASTER, MPI_COMM_WORLD);
-  MPI_Reduce(&my_error, &error, 1, MPI_FLOAT, MPI_MAX, MASTER, MPI_COMM_WORLD);
+  //MPI_Reduce(&my_error, &error, 1, MPI_FLOAT, MPI_MAX, MASTER, MPI_COMM_WORLD);
 
   MPI_Gather(my_A+starting, my_nrows*n ,  MPI_FLOAT, A, my_nrows*n, MPI_FLOAT, MASTER, MPI_COMM_WORLD);
   
@@ -281,7 +279,7 @@ int main(int argc, char** argv)
     error = sqrtf( error );
     printf("Total Iterations: %5d, ERROR: %0.6f, ", iter, error);
     printf("A[%d][%d]= %0.6f\n", n/128, n/128, A[(n/128)*n+n/128]);
-    print_matrix(A, n, n);
+    //print_matrix(A, n, n);
     free(A); free(temp);
    }
    /*The master process prints the execution time*/
