@@ -1,0 +1,15 @@
+#!/bin/bash
+#
+#SBATCH --job-name=baseline
+#SBATCH --output=Baseline_n4096iter1000_nonexclusive.txt
+
+#SBATCH --partition=test.q
+
+source /soft/modules-3.2.10/Modules/3.2.10/init/bash
+module load openmpi/1.8.1
+module load gcc/6.1.0
+#export OMP_NUM_THREADS=1
+/home/master/ppM/ppM-1-7/Escritorio/EntregaMPI/task1/lapFusion 4096 1000 
+
+# Com demanar per exemple 2 nodes (ordinadors) amb 4 cores cadascun 
+#MPI + OPENMP: com demanar 2 nodes (ordinadors) amb un total de 8 cores i 2 threads cada core?

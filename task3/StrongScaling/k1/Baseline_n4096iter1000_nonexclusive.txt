@@ -1,0 +1,2 @@
+Jacobi relaxation Calculation: 4096 x 4096 mesh, maximum of 1000 iterations
+Total Iterations:  1000, ERROR: 0.024931, A[32][32]= 0.004358

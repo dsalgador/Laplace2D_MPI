@@ -1,0 +1,2 @@
+elapsed_time,iterations,n,k,N,error
+566.888788,1000,4096,1,2,0.024931

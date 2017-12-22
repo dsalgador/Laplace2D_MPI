@@ -1,0 +1,17 @@
+#!/bin/bash
+#
+#SBATCH --job-name=N1n4weak
+#SBATCH --output=N1n4_n8192iter1000k4_nonexclusive.txt
+#
+#SBATCH -N 1 # number of nodes
+#SBATCH -n 4 # number of cores
+#SBATCH --partition=aolin.q
+
+source /soft/modules-3.2.10/Modules/3.2.10/init/bash
+module load openmpi/1.8.1
+module load gcc/6.1.0
+#export OMP_NUM_THREADS=1
+mpirun /home/master/ppM/ppM-1-7/Escritorio/EntregaMPI/task3/mpi_lapFusion_opt 8192 1000 4
+
+# Com demanar per exemple 2 nodes (ordinadors) amb 4 cores cadascun 
+#MPI + OPENMP: com demanar 2 nodes (ordinadors) amb un total de 8 cores i 2 threads cada core?
