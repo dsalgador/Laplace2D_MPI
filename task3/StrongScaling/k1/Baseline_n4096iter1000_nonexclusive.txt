@@ -1,2 +1,19 @@
 Jacobi relaxation Calculation: 4096 x 4096 mesh, maximum of 1000 iterations
 Total Iterations:  1000, ERROR: 0.024931, A[32][32]= 0.004358
+
+ Performance counter stats for '/home/master/ppM/ppM-1-7/Escritorio/EntregaMPI/task1/lapFusion 4096 1000':
+
+     422860,880002      task-clock (msec)         #    1,001 CPUs utilized          
+            21.568      context-switches          #    0,051 K/sec                  
+                13      cpu-migrations            #    0,000 K/sec                  
+             1.323      page-faults               #    0,003 K/sec                  
+ 1.423.939.634.696      cycles                    #    3,367 GHz                    
+   812.199.765.018      stalled-cycles-frontend   #   57,04% frontend cycles idle   
+   160.464.756.418      stalled-cycles-backend    #   11,27% backend  cycles idle   
+ 2.046.500.170.392      instructions              #    1,44  insns per cycle        
+                                                  #    0,40  stalled cycles per insn
+   100.917.817.737      branches                  #  238,655 M/sec                  
+       306.999.405      branch-misses             #    0,30% of all branches        
+
+     422,386655122 seconds time elapsed
+
