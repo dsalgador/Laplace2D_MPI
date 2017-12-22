@@ -285,7 +285,7 @@ int main(int argc, char** argv)
    /*The master process prints the execution time*/
    if(rank == MASTER){
     tf = MPI_Wtime();
-    printf("Elapsed time, %2.5lf\n", tf-t0);
+    printf("Elapsed time,%2.5lf\n", tf-t0);
    }
    //Finalize the MPI environment.
    MPI_Finalize();
