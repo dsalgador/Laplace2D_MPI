@@ -1,2 +1,5 @@
-elapsed_time,iterations,n,k,N,error
-893.132092,1000,16384,1,16,0.025225
+[aolin18.uab.es:11839] [[63525,0],3] ORTE_ERROR_LOG: The system limit on number of children a process can have was reached in file odls_default_module.c at line 894
+[aolin18.uab.es:11839] [[63525,0],3] ORTE_ERROR_LOG: The system limit on number of children a process can have was reached in file odls_default_module.c at line 894
+[aolin18.uab.es:11839] [[63525,0],3] ORTE_ERROR_LOG: The system limit on number of children a process can have was reached in file odls_default_module.c at line 894
+[aolin18.uab.es:11839] [[63525,0],3] ORTE_ERROR_LOG: The system limit on number of children a process can have was reached in file odls_default_module.c at line 894
+4 total processes failed to start
