@@ -1,0 +1,2 @@
+filename='N2k1_n1000iter100.csv'
+awk 'BEGIN{i=0}{i++;if (i%2==0 || i==1) print $1}' $filename
