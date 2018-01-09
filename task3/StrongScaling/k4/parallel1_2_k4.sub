@@ -5,7 +5,7 @@
 #
 #SBATCH -N 1 # number of nodes
 #SBATCH -n 2 # number of cores
-#SBATCH --partition=aolin.q
+#SBATCH --partition=test.q
 
 source /soft/modules-3.2.10/Modules/3.2.10/init/bash
 module load openmpi/1.8.1
