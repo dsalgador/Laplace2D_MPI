@@ -52,23 +52,4 @@ mpirun -np 4 mpi_lapFusion 1024 100
 
 ## Test cases
 
-### Test 1
-
-* Description
-
-* Documentation
-
-### Test 2
-
-* Description
-
-* Documentation
-
-### Test 3
-
-* Description
-
-* Documentation
-
-### Test 4
-
+Some code tests can be accessed in earlier commits. If one is interested in those, then have a look at the commit comentaries.
