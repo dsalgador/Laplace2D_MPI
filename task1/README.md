@@ -45,30 +45,11 @@ To execute the programs for example when *N=1024* and the number of iterations i
 ```
 mpirun -np M mpi_lapFusion 1024 100
 ```
-where M is the number of nodes that one wants to use. To run with 4 nodes the command would be:
+where M is the number of processes that one wants to use. To run with 4 processes the command would be:
 ```
 mpirun -np 4 mpi_lapFusion 1024 100
 ```
 
 ## Test cases
 
-### Test 1
-
-* Description
-
-* Documentation
-
-### Test 2
-
-* Description
-
-* Documentation
-
-### Test 3
-
-* Description
-
-* Documentation
-
-### Test 4
-
+Some code tests can be accessed in earlier commits. If one is interested in those, then have a look at the commit comentaries.
