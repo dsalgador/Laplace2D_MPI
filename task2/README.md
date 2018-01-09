@@ -4,7 +4,7 @@
 Some external libraries will need to be included to run this program. 
 ### Libraries, modules and compiler
 
-The MPI version program, `lapFusion_mpi.c` supports the following C compiler versions:
+The optimized MPI version program, `lapFusion_mpi_opt.c` supports the following C compiler versions:
 
 * Linux gcc v 5.4.0 or higher
 * Linux openmpi v 1.8.1 (or higher)
