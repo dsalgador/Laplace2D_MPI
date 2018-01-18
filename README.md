@@ -54,3 +54,4 @@ Measuring_Parallel_Scaling_Performance.
 
 
 # License
+All the code scripts in C and in R that are modified and implemented by the authors of this repository *must not be copied* by students from the Master's that are not the authors of this repository. We declare that the codes in this repository are either proportioned by the professors of the Master's or implemented by ourselves.
